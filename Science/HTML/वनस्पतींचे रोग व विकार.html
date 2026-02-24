@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPSC मास्टर क्विझ: वनस्पतींचे रोग व विकार</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; --bg: #f4f7f6; --text: #333; --card: #fff; }
+        body.dark { --bg: #1a1a2e; --text: #eaeaea; --card: #16213e; --primary: #3498db; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; transition: 0.3s; }
+        .main-wrapper { display: flex; max-width: 1200px; width: 100%; gap: 20px; flex-wrap: wrap; }
+        .quiz-container { flex: 3; min-width: 320px; background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        .nav-sidebar { flex: 1; min-width: 280px; background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; position: sticky; top: 10px; }
+        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .nav-btn { padding: 10px 2px; border: 1px solid #ddd; border-radius: 6px; background: #eee; cursor: pointer; text-align: center; font-size: 0.85em; font-weight: bold; transition: 0.2s; color: #333; }
+        .nav-btn.active { border: 2.5px solid var(--primary); transform: scale(1.1); z-index: 10; }
+        .nav-btn.correct { background: var(--success) !important; color: white; border-color: #1e8449; }
+        .nav-btn.wrong { background: var(--danger) !important; color: white; border-color: #c0392b; }
+        .nav-btn.skipped { background: var(--warning) !important; color: white; border-color: #d35400; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; margin-bottom: 20px; padding-bottom: 10px; }
+        .exam-tag { display: inline-block; background: #e1f5fe; color: #0277bd; padding: 4px 12px; border-radius: 5px; font-size: 0.85em; font-weight: bold; margin-bottom: 10px; }
+        .match-container { display: flex; justify-content: space-between; margin: 15px 0; background: rgba(0,0,0,0.03); padding: 15px; border-radius: 10px; border: 1px solid #ccc; gap: 20px; }
+        .column { flex: 1; text-align: left; }
+        .column-header { font-weight: bold; border-bottom: 1.5px solid #3498db; margin-bottom: 8px; text-align: center; color: #3498db; }
+        .match-item { margin: 10px 0; font-size: 1.05em; line-height: 1.4; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 2px; }
+        .option { display: block; background: rgba(0,0,0,0.05); padding: 14px 18px; margin: 12px 0; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; text-align: left; font-size: 1.05em; }
+        .option.correct { background: var(--success) !important; color: white; }
+        .option.wrong { background: var(--danger) !important; color: white; }
+        .footer-btns { display: flex; gap: 15px; margin-top: 25px; }
+        button { flex: 1; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; }
+        #skip-btn { background: var(--warning); color: white; }
+        #next-btn { background: var(--primary); color: white; display: none; }
+        #timer-box { font-weight: bold; color: var(--danger); font-size: 1.3em; padding: 5px 12px; border: 2px solid; border-radius: 8px; }
+        @media (max-width: 900px) { .main-wrapper { flex-direction: column; } .nav-sidebar { position: static; max-height: 300px; } }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <div class="quiz-container">
+        <div class="header">
+            <h3 style="margin:0;">विषय: सामान्य विज्ञान (वनस्पती)</h3>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div id="timer-box">36s</div>
+                <button onclick="document.body.classList.toggle('dark')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🌗</button>
+            </div>
+        </div>
+        <div id="mode-selection" style="text-align: center; padding: 50px 0;">
+            <h2 style="margin-bottom: 30px;">क्विझ मोड निवडा</h2>
+            <button onclick="setMode(true)" style="background:#e67e22; color:white; margin:10px;">⏱️ With Timer (36s)</button>
+            <button onclick="setMode(false)" style="background:#27ae60; color:white; margin:10px;">📖 Without Timer</button>
+        </div>
+        <div id="quiz-section" style="display:none;">
+            <div id="progress-text" style="margin-bottom:10px; font-weight:bold; color: #3498db;">प्रगती: 1 / 29</div>
+            <div id="exam-label" class="exam-tag"></div>
+            <div id="q-content"></div>
+            <div id="options-container"></div>
+            <div class="footer-btns">
+                <button id="skip-btn" onclick="skipQuestion()">Skip Question</button>
+                <button id="next-btn" onclick="handleNext()">Next Question ➔</button>
+            </div>
+        </div>
+        <div id="result-section" style="display:none; text-align:center; padding: 40px 0;">
+            <h1 id="final-score" style="font-size: 3em; color: var(--success);"></h1>
+            <p id="stats-summary" style="font-size: 1.2em; margin: 20px 0;"></p>
+            <button onclick="location.reload()" style="background:var(--primary); color:white; width: 250px;">Restart Quiz</button>
+        </div>
+    </div>
+    <div class="nav-sidebar">
+        <h4 style="margin:0 0 10px 0; border-bottom: 1.5px solid #ddd; padding-bottom: 8px;">प्रश्नांची यादी</h4>
+        <div style="font-size: 0.75em; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+            <span>🟢 बरोबर</span> <span>🔴 चूक</span> <span>🟡 स्किप</span>
+        </div>
+        <div class="nav-grid" id="nav-grid"></div>
+    </div>
+</div>
+<script>
+    const questions = [
+        { q: "1. भातावरील खैरा हा रोग कोणत्या सुक्ष्मपोषक घटकांच्या कमतरतेमुळे होतो ?", exam: "(संयुक्त गट क मुख्य डिसें. 2023) [cite: 924-928]", options: ["1) कॉपर", "2) सोडियम", "3) झिंक", "4) मॉलिब्डेनम"], ans: 2 },
+        { q: "2. खालीलपैकी वनस्पतींचे रोग व त्यांचे कारकजीव यांची अयोग्य जोडी ओळखा.<br><br>वनस्पती रोग - 	कारक जीव<br>1) लिंबू वर्गीय कँकर - 	झान्थोमोनास सिट्राय<br>2) गव्हावरील तांबेरा - 	पक्सिनिया ग्रॅमिनीस ट्रिटीसाय<br>3) बाजरी वरील अरगट - 	सरकोस्पोरा परसोनॅटा<br>4) ऊसाचा लाल कुज रोग - 		कोलिटोट्रायकम फल्कॅटम्", exam: "(संयुक्त गट क मुख्य डिसें. 2023) [cite: 929-942]", options: ["1) जोडी 1", "2) जोडी 2", "3) जोडी 3", "4) जोडी 4"], ans: 2 },
+        { q: "3. इंटर-व्हेनल क्लोरोसिस हे वनस्पतींच्या पानावर कोणत्या घटकाच्या कमतरतेमुळे दिसून येते ?", exam: "(संयुक्त गट ब मुख्य, नोव्हें. 2023) [cite: 943-947]", options: ["1) नायट्रोजन", "2) कॅल्शियम", "3) बोरॉन", "4) आयर्न"], ans: 3 },
+        { q: "4. खालीलपैकी कोणता कारकजीव गव्हावरील तांबेरा रोगासाठी कारणीभूत आहे ?", exam: "(Combine 'B' 2021) [cite: 948-951]", options: ["1) पक्सिनिया ग्रामीणी ट्रिटीकाय", "2) अँथोमोनास सिट्राय", "3) पक्सिनिया परपूरीया", "4) प्लाझमोपोरा व्हिटीकोल"], ans: 0 },
+        { q: "5. खालीलपैकी कोणत्या रोगामुळे झाडाच्या पानातील हरितद्रव्ये नष्ट होवून झाडाची पाने आकुंचन पावतात ?", exam: "(Combine 'B' 2020) [cite: 952-955, 981]", options: ["1) मोझेंयिक डिसीज ऑफ टोबॅको", "2) सायट्रस कँकर", "3) स्मट ऑफ जवार", "4) रायझोक्टोनिया"], ans: 0 },
+        { qType: "match", qText: "6. जोड्या जुळवा :", exam: "(AMVI Pre.2020) [cite: 983-1026]", colA: ["अ) व्हीपटेल रोग", "ब) डायबॅक रोग", "क) खैरा रोग", "ड) अर्ली ब्लाइट रोग"], colB: ["1) बटाटा", "2) फुलकोबी", "3) लिंबू", "4) भात"], options: ["1) अ-1, ब-2, क-3, ड-4", "2) अ-3, ब-4, क-2, ड-1", "3) अ-2, ब-3, क-4, ड-1", "4) अ-4, ब-1, क-3, ड-2"], ans: 2 },
+        { q: "7. हे सूक्ष्मजीवाणू एकदल वनस्पतींमध्ये असहजीवी नत्र स्थिरीकरणास उपयुक्त आहे.", exam: "(Combine 'B' Pre. 2019) [cite: 958-961]", options: ["1) अॅझोटोबॅक्टर", "2) रायझोबियम", "3) दोन्ही 1 आणि 2", "4) वरीलपैकी कोणतेही नाही"], ans: 0 },
+        { q: "8. कोणत्या वनस्पतीमध्ये एच.एस. के. अथवा C4 या प्रकारचे प्रकाशसंश्लेषण होते ?", exam: "(MPSC Pre. 2019) [cite: 962-966]", options: ["1) ऊस", "2) भुईमूग", "3) सूर्यफूल", "4) बटाटा"], ans: 0 },
+        { q: "9. वनस्पतींच्या अन्नामधील तेलाचे गोळे ............ ने लाल होतात.", exam: "(Clerk Mains 2019) [cite: 967-969]", options: ["1) सुदान-1", "2) सुदान -IV", "3) सैफरानिन", "4) सुदान-III"], ans: 1 },
+        { q: "10. 'लेट ब्लाईट ऑफ पोटॅटो' नावाने ओळखला जाणारा वनस्पती रोगास खालीलपैकी कोणती फंगल जैविक वनस्पती कारणीभूत आहे ?", exam: "(Combine 'B' Pre. 2018) [cite: 970-972]", options: ["1) फायटोप्थोरा इन्फेस्टन्स", "2) पायथीयम स्पीसीज", "3) अल्ब्युगो कॅनडीडा", "4) कोलेटोट्रायक"], ans: 0 },
+        { q: "11. काही झाडांमध्ये तांब्याच्या कमतरतेमुळे सालीवर फोड व खोलवर तुकडे पडून त्यातून डिंक बाहेर येतो. अशा रोगाला ............ म्हणतात.", exam: "(MPSC Pre. 2018) [cite: 973-975]", options: ["1) एक्झांथिमा", "2) पांढरा डोळा", "3) डायबॅक", "4) पेशीमृत होणे"], ans: 0 },
+        { q: "12. लायकेनच्या संदर्भात खालीलपैकी कोणते विवरण बरोबर आहे ?", exam: "(MPSC Pre. 2017) [cite: 976-979]", options: ["1) शैवाल आर्द्रता व खनिज घटकांचे शोषण करून कवकास उपलब्ध करून देतात आणि प्रकाश संश्लेषण करून अन्नाचे शोषण करतात.", "2) कवक आर्द्रता व खनिजांचे शोषण करून शैवालास उपलब्ध करून देतात व शैवाल प्रकाश संश्लेषण करून अन्न तयार करतात.", "3) त्यांच्या मध्ये फॅकल्टेटीव्ह म्युच्युअॅलीझम असते.", "4) लायकेन मध्ये चांगल्या प्रकारे विकसित असणाऱ्या स्टील उती आर्द्रता शोषून घेतात."], ans: 1 },
+        { q: "13. खालीलपैकी कोणते वनस्पती संप्रेरक फळे पिकविण्याच्या क्रियेला नियंत्रित करतात ?<br>अ) झियाटिन <br>ब) ऑक्झीन्स् <br>क) जिबरलिक आम्ल <br>ड) ईथिलीन", exam: "(MPSC Pre, 2017) [cite: 980, 1003-1008, 1020-1028]", options: ["1) अ, ब आणि ड", "2) फक्त अ आणि ब", "3) फक्त ब आणि क", "4) फक्त ड"], ans: 3 },
+        { q: "14. टीका डिसीज' हा रोग सामान्यतः कोणत्या पिकावर आढळतो ?", exam: "(ASO Pre. 2016) [cite: 1037-1040]", options: ["1) भुईमूग", "2) टमाटे", "3) कपाशी", "4) लिंबू"], ans: 0 },
+        { q: "15. वनस्पती वाढीसाठी आवश्यक सूक्ष्म अन्नद्रव्य कोणते ?", exam: "(ASO Pre. 2016) [cite: 1041-1046]", options: ["1) सल्फर", "2) पलाश", "3) मैग्नेशियम", "4) जस्त"], ans: 3 },
+        { q: "16. वनस्पतीच्या शरीर बांधनीसाठी (घडन) कोणते घटक आवश्यक आहेत ?", exam: "(ASO Pre. 2016) [cite: 1047-1051]", options: ["1) मैग्नेशियम, तांबे आणि लोह", "2) तांबे, कर्ब (कार्बन) आणि प्राणवायु", "3) मंगनीज, कैल्सीयम आणि नत्रवायु", "4) कर्ब (कार्बन), हायड्रोजन आणि प्राणवायु"], ans: 3 },
+        { q: "17. वनस्पतीवाढीसाठी अत्यावश्यक भूमिका प्रदान करणारे अन्नद्रव्य खालीलपैकी कोणते ?", exam: "(STI Pre. 2015) [cite: 1052-1056]", options: ["1) मोलीबडीनम", "2) बोरॉन", "3) नत्र", "4) तांबे"], ans: 2 },
+        { q: "18. पुढीलपैकी कोणते विधान योग्य आहे? (STI Pre. 2014)<br>अ) तांदळावरील खैऱ्या रोग जस्त खनिजद्रव्याच्या अभावामुळे होतो.<br>ब) पावडरी माइल्ड्यू हा गव्हावरील रोग जमीनीतील पालाशच्या अभावामुळे होतो.", exam: "[cite: 1057-1062, 1066, 1067]", options: ["1) केवळ अ योग्य", "2) केवळ ब योग्य", "3) अ व ब दोन्ही योग्य", "4) अ व ब दोन्ही अयोग्य"], ans: 0 },
+        { q: "19. धोतऱ्याचे परागकण ............ असतात.", exam: "(MES Ele & Mech. 2014) [cite: 1063, 1068, 1069, 1075, 1076]", options: ["1) गोलाकार", "2) त्रिकोणी", "3) होडीच्या आकाराचे", "4) अंडाकार"], ans: 0 },
+        { q: "20. पानांवरील केवडा रोग कोणत्या खनिज द्रव्याच्या अभावा मुळे होतो ?", exam: "(PSI Pre. 2014) [cite: 1070-1074]", options: ["1) बोरॉन (B)", "2) मॉलीब्डेनम (Mo)", "3) कोबाल्ट (Co)", "4) लोह (Fe)"], ans: 3 },
+        { q: "21. फुलांमधील आवश्यक मंडळ कोणते ?", exam: "(MPSC Pre. 2014) [cite: 1139-1141, 1145-1147]", options: ["1) निदल आणि परिदल", "2) निदल आणि दल", "3) पुमंग आणि जायांग", "4) निदल पुंज आणि पुंकेसर"], ans: 2 },
+        { q: "22. ............ चा उपयोग फळांसाठी बुरशीरोधक (antifungal) म्हणून केला जातो.", exam: "(PSI Pre. 2014) [cite: 1135-1138, 1142-1144]", options: ["1) कार्बमिथेंझोल", "2) बेनोमिल", "3) थायोसल्फेट", "4) वरीलपैकी कोणतेही नाही"], ans: 3 },
+        { q: "23. नायट्रोजन स्थिरीकरण मध्ये मूलभूत गरजेचे घटक नमूद करा.<br>अ) नायट्रोजनेज <br>ब) फेरडॉक्झीन <br>क) एटीपी <br>ड) एअरोबीक कंडीशन", exam: "(MPSC Pre. 2014) [cite: 1037, 1078, 1079, 1082-1086]", options: ["1) सर्व पर्याय योग्य", "2) अ, ब, क", "3) अ, ब, ड", "4) अ, क, ड"], ans: 2 },
+        { q: "24. वनस्पतिंच्या योग्य वाढीसाठी एकूण किती अन्नद्रव्यांची अत्यंत आवश्यकता असते ?", exam: "(ASO Pre. 2014) [cite: 1080, 1081, 1087-1092, 1094]", options: ["1) 16", "2) 32", "3) 15", "4) 12"], ans: 0 },
+        { q: "25. प्रकाश संश्लेषणाची क्रिया हिरव्या वनस्पतीमधील कोणत्या भागात होते ?", exam: "(PSI Pre. 2013) [cite: 1093, 1095-1100]", options: ["1) पाने", "2) हिरवी खोडे", "3) थोड्या प्रमाणात फुलांमध्ये", "4) वरील सर्व"], ans: 3 },
+        { qType: "match", qText: "26. वनस्पतीपासून मिळविलेल्या सजीवांमध्ये सक्रीय असणाऱ्या संयुगाची यादी यासाठी योग्य जोडी ओळखा :", exam: "(MPSC Pre. 2013) [cite: 1101-1114, 1116, 1118]", colA: ["अ) निकोटीन", "ब) निबीडाईन", "क) रोटीनोन", "ड) पायरीश्रम"], colB: ["1) तंबाखू वनस्पतीपासून", "2) कडू लिंबापासून", "3) डेरिस इलिप्टिकापासून", "4) क्रायसँथमम सिनक्रॅरीफोलीअमपासून अदिम लोकांनी वनस्पतीचे सार काढून, सजीवांमध्ये सक्रीय असणारे संयुग मिळविले व त्याचा वापर मासे स्तंबीत करण्यासाठी केला"], options: ["1) अ", "2) ब", "3) क", "4) ड"], ans: 2 },
+        { q: "27. तंबाखूमधील धोकादायक रसायन कोणते ?", exam: "(Forest Pre. 2012) [cite: 1117-1121]", options: ["1) युरिआ", "2) निकोटिन", "3) युरिक आम्ल", "4) कॅल्शियम कार्बोनेट"], ans: 1 },
+        { q: "28. नैसर्गिक सूक्ष्मजैविक वनस्पर्तीचे नुकसान कशामुळे होते?", exam: "(Asst. Pre. 2012) [cite: 1126-1133]", options: ["1) सेंद्रिय शेतीमुळे", "2) जलसिंचनामुळे", "3) कंपोस्ट खतांमुळे", "4) रासायनिक खतांमुळे"], ans: 3 },
+        { q: "29. प्रकाश संश्लेषण क्रियेत हरित वनस्पती सौर ऊर्जेचे रूपांतर ............ ऊर्जेत करतात.", exam: "(PSI Pre. 2011) [cite: 1148-1153, 1157]", options: ["1) यांत्रिक", "2) रासायनिक", "3) अणु", "4) विद्युत"], ans: 1 }
+    ];
+
+    let currentIdx = 0, correctCount = 0, wrongCount = 0, useTimer = false, timeLeft = 36, timerInt, statusMap = {};
+
+    function initNav() {
+        const grid = document.getElementById("nav-grid"); grid.innerHTML = "";
+        questions.forEach((_, i) => {
+            const btn = document.createElement("div"); btn.className = "nav-btn"; btn.id = `nav-${i}`; btn.innerText = i + 1;
+            btn.onclick = () => { if(!statusMap[i]) { currentIdx = i; showQuestion(); } }; grid.appendChild(btn);
+        });
+    }
+
+    function setMode(mode) {
+        useTimer = mode; document.getElementById("mode-selection").style.display = "none"; document.getElementById("quiz-section").style.display = "block";
+        if(!useTimer) document.getElementById("timer-box").style.display = "none"; initNav(); showQuestion();
+    }
+
+    function showQuestion() {
+        if(useTimer) { clearInterval(timerInt); timeLeft = 36; startTimer(); }
+        const q = questions[currentIdx]; document.getElementById("progress-text").innerText = `प्रगती: ${currentIdx + 1} / ${questions.length}`;
+        document.getElementById("exam-label").innerText = q.exam;
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); document.getElementById(`nav-${currentIdx}`).classList.add("active");
+        let content = `<div style="text-align:left; font-size:1.15em; font-weight:bold; margin-bottom:15px;">${q.qType === 'match' ? q.qText : q.q}</div>`;
+        if(q.qType === "match") {
+            content += `<div class="match-container"><div class="column"><div class="column-header">गट अ</div>${q.colA.map(item => `<div class="match-item">${item}</div>`).join('')}</div><div class="column"><div class="column-header">गट ब</div>${q.colB.map(item => `<div class="match-item">${item}</div>`).join('')}</div></div>`;
+        }
+        document.getElementById("q-content").innerHTML = content; document.getElementById("next-btn").style.display = "none"; document.getElementById("skip-btn").style.display = "block";
+        const container = document.getElementById("options-container"); container.innerHTML = "";
+        q.options.forEach((opt, i) => { const div = document.createElement("div"); div.className = "option"; div.innerText = opt; div.onclick = () => checkAns(div, i); container.appendChild(div); });
+    }
+
+    function startTimer() {
+        document.getElementById("timer-box").innerText = timeLeft + "s";
+        timerInt = setInterval(() => { timeLeft--; document.getElementById("timer-box").innerText = timeLeft + "s"; if(timeLeft <= 0) { clearInterval(timerInt); checkAns(null, -1); }}, 1000);
+    }
+
+    function checkAns(el, i) {
+        clearInterval(timerInt); const correct = questions[currentIdx].ans; const options = document.querySelectorAll(".option");
+        options.forEach(opt => opt.onclick = null); const navBtn = document.getElementById(`nav-${currentIdx}`);
+        if(i === correct) { if(el) el.classList.add("correct"); correctCount++; statusMap[currentIdx] = 'correct'; navBtn.className = "nav-btn correct"; }
+        else { if(el) el.classList.add("wrong"); if(i !== -1) options[correct].classList.add("correct"); wrongCount++; statusMap[currentIdx] = 'wrong'; navBtn.className = "nav-btn wrong"; }
+        document.getElementById("next-btn").style.display = "block"; document.getElementById("skip-btn").style.display = "none";
+    }
+
+    function skipQuestion() { clearInterval(timerInt); statusMap[currentIdx] = 'skipped'; document.getElementById(`nav-${currentIdx}`).className = "nav-btn skipped"; handleNext(); }
+    function handleNext() { if(currentIdx < questions.length - 1) { currentIdx++; showQuestion(); } else { showResult(); } }
+    function showResult() { document.getElementById("quiz-section").style.display = "none"; document.getElementById("result-section").style.display = "block"; document.getElementById("final-score").innerText = `निकाल: ${correctCount} / ${questions.length}`; document.getElementById("stats-summary").innerHTML = `बरोबर: <span style="color:var(--success)">${correctCount}</span> | चूक: <span style="color:var(--danger)">${wrongCount}</span>`; }
+</script>
+</body>
+</html>
